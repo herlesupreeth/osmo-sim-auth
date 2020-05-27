@@ -24,8 +24,35 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 from binascii import *
 from card.utils import *
 from optparse import OptionParser
+from card.ISIM import ISIM
 from card.USIM import USIM
 from card.SIM import SIM
+
+def handle_isim(options, rand_bin, autn_bin):
+	i = ISIM()
+	if not i:
+		print "Error opening USIM"
+		exit(1)
+
+	if options.debug:
+		i.dbg = 2;
+
+	imsi = i.get_imsi()
+	print "Testing ISIM card with IMSI %s" % imsi
+
+	print "\nUMTS Authentication"
+	ret = i.authenticate(rand_bin, autn_bin, ctx='3G')
+        if ret == None:
+                print "UMTS Authentication failed"
+                exit(1)
+	if len(ret) == 1:
+		print "AUTS:\t%s" % b2a_hex(byteToString(ret[0]))
+	else:
+		print "RES:\t%s" % b2a_hex(byteToString(ret[0]))
+		print "CK:\t%s" % b2a_hex(byteToString(ret[1]))
+		print "IK:\t%s" % b2a_hex(byteToString(ret[2]))
+		if len(ret) == 4:
+			print "Kc:\t%s" % b2a_hex(byteToString(ret[3]))
 
 def handle_usim(options, rand_bin, autn_bin):
 	u = USIM()
@@ -104,6 +131,9 @@ if __name__ == "__main__":
 	parser.add_option("-s", "--sim", dest="sim",
 			  help="SIM mode (default: USIM)",
 			  action="store_true", default=False)
+	parser.add_option("-i", "--isim", dest="isim",
+			  help="ISIM mode (default: USIM)",
+			  action="store_true", default=False)
 	parser.add_option("-I", "--ipsec", dest="ipsec",
 			  help="IPSEC mode for strongswan triplets.dat",
 			  action="store_true")
@@ -126,6 +156,11 @@ if __name__ == "__main__":
 
 	if options.sim == True:
 		handle_sim(options, rand_bin)
+	elif options.isim == True:
+		if not options.autn:
+			print "You have to specify AUTN"
+			exit(2)
+		handle_isim(options, rand_bin, autn_bin)
 	else:
 		if not options.autn:
 			print "You have to specify AUTN"
