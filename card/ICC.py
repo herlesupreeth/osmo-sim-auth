@@ -310,6 +310,10 @@ class ISO7816(object):
             'class not supported'
         elif sw1 == 0x6F and sw2 == 0x00: status = 'checking error: ' \
             'no precise diagnosis'
+        elif sw1 == 0x98 and sw2 == 0x62: status = 'checking error: ' \
+            'Authentication error, incorrect MAC'
+        elif sw1 == 0x98 and sw2 == 0x64: status = 'checking error: ' \
+            'Authentication error, security context not supported'
         return status
     
     def sr_apdu(self, apdu, force=False):
